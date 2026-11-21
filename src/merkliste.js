@@ -1,10 +1,24 @@
+const STORAGE_KEY = "merkliste";
+
+// Hilfsfunktionen für localStorage
+function leseMerkliste() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function speichereMerkliste(liste) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(liste));
+}
 
 // Merkliste laden und anzeigen
-async function ladeMerkliste() {
-  const response = await fetch("http://localhost:3000/merkliste");
-  const gespeicherte = await response.json();
+function ladeMerkliste() {
+  const gespeicherte = leseMerkliste();
 
   const merklisteDiv = document.getElementById("merkliste");
+  if (!merklisteDiv) return;
   merklisteDiv.innerHTML = "";
 
   if (gespeicherte.length === 0) {
@@ -24,59 +38,41 @@ async function ladeMerkliste() {
     merklisteDiv.appendChild(filmEl);
   });
 
-  // Eventlistener für Entfernen-Buttons hinzufügen:
   document.querySelectorAll(".entfernen-btn").forEach((button) => {
-    button.addEventListener("click", async (event) => {
+    button.addEventListener("click", (event) => {
       const id = event.target.getAttribute("data-id");
-      console.log("Entferne Film mit ID:", id); // Debug
-
       if (!id) {
         alert("Fehler: Keine ID gefunden.");
         return;
       }
-
-      const res = await fetch(`http://localhost:3000/merkliste/${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        ladeMerkliste();
-      } else {
-        const err = await res.text();
-        alert("Fehler beim Entfernen: " + err);
-      }
+      const neueListe = leseMerkliste().filter((f) => String(f.id) !== id);
+      speichereMerkliste(neueListe);
+      ladeMerkliste();
     });
-  }); // <-- fehlende Klammer war hier!
+  });
 }
 
 // Film hinzufügen
-async function filmHinzufügen(titel, poster, trailer) {
+function filmHinzufügen(titel, poster, trailer) {
   if (!titel || !poster || !trailer) {
     alert("Bitte alle Felder ausfüllen!");
     return;
   }
 
-  const response = await fetch("http://localhost:3000/merkliste", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      Titel: titel,
-      Poster: poster,
-      Trailer: trailer,
-    }),
+  const liste = leseMerkliste();
+  liste.push({
+    id: Date.now(), // eindeutige ID
+    Titel: titel,
+    Poster: poster,
+    Trailer: trailer,
   });
+  speichereMerkliste(liste);
 
-  if (response.ok) {
-    alert("Film hinzugefügt!");
-    ladeMerkliste();
-  } else {
-    alert("Fehler beim Hinzufügen.");
-  }
+  alert("Film hinzugefügt!");
+  ladeMerkliste();
 }
 
-// Beim Laden der Seite: Merkliste abrufen
+// Beim Laden der Seite
 document.addEventListener("DOMContentLoaded", () => {
   ladeMerkliste();
 

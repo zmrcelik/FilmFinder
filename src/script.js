@@ -1,4 +1,3 @@
-
 const params = new URLSearchParams(window.location.search);
 const genre = params.get("genre")?.toLowerCase().trim();
 const plattform = params.get("plattform")?.toLowerCase().trim();
@@ -431,61 +430,29 @@ const ergebnisContainer = document.getElementById("ergebnis");
     `;
   }
   
-  async function zurMerklisteHinzufuegen(film) {
-    const response = await fetch("http://localhost:3000/merkliste", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(film)
-    });
-  
-    if (response.ok) {
-      alert(`"${film.titel}" wurde zur Merkliste hinzugefügt!`);
-    } else {
-      alert("Fehler beim Hinzufügen zur Merkliste.");
-    }
+
+// Film zur Merkliste hinzufügen (speichert im Browser, kein Backend nötig)
+function zurMerklisteHinzufuegen(film) {
+  let liste = [];
+  try {
+    liste = JSON.parse(localStorage.getItem("merkliste")) || [];
+  } catch {
+    liste = [];
   }
-async function requestTextWithGET(url) {
-  const response = await fetch(url);
-  console.log('Response:', response); // vollständiges Response-Objekt
-  const text = await response.text();
-  console.log('Response-Text:', text); // Text aus dem Response-Body
-}
 
-requestTextWithGET('https://heintz-s.github.io/GIS-WS24/test.txt');
-console.log('Zwischenzeitlich weiterarbeiten...');
-function requestTextWithGET(url) {
-  const promise = fetch(url);
-  promise.then(fetchErfolgreich).then(responseTextErfolgreich);
-}
+  // Doppelte Einträge verhindern
+  if (liste.some((f) => f.Titel === film.titel)) {
+    alert(`"${film.titel}" ist schon in deiner Merkliste.`);
+    return;
+  }
 
-function fetchErfolgreich(response) {
-  console.log('Response', response); // komplettes Response Objekt
-  return response.text();
-}
-
-function responseTextErfolgreich(text) {
-  console.log(text); // Text aus Response Body
-}
-
-requestTextWithGET('https://heintz-s.github.io/GIS-WS24/test.txt');
-// Am Ende von filmfinder.js:
-
-async function zurMerklisteHinzufuegen(film) {
-  const response = await fetch("http://localhost:3000/merkliste", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      Titel: film.titel,
-      Poster: film.poster,
-      Trailer: film.trailer,
-    }),
+  liste.push({
+    id: Date.now(),
+    Titel: film.titel,
+    Poster: film.poster,
+    Trailer: film.trailer,
   });
 
-  if (response.ok) {
-    alert(`📌 "${film.titel}" wurde zur Merkliste hinzugefügt!`);
-  } else {
-    alert("❌ Fehler beim Hinzufügen.");
-  }
+  localStorage.setItem("merkliste", JSON.stringify(liste));
+  alert(`📌 "${film.titel}" wurde zur Merkliste hinzugefügt!`);
 }
